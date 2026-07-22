@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cashier Floor Map</title>
+    <style>
+      :root {
+        --green: #2fa865;
+        --amber: #f6b93b;
+        --red: #e74c3c;
+        --indigo: #5e5ce6;
+        --purple: #9b59b6;
+        --gray: #7f8c8d;
+        --ink: #1f2937;
+        --surface: #f7f8fc;
+        --line: #d3d8e2;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        color: var(--ink);
+      }
+
+      .app-shell {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 14px 18px;
+        background: rgba(255,255,255,0.85);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+      }
+
+      .hero h1 {
+        margin: 0 0 6px;
+        font-size: 1.3rem;
+      }
+
+      .hero p {
+        margin: 0;
+        color: #4b5563;
+      }
+
+      .view-switcher {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .view-btn {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 10px 12px;
+        font-weight: 600;
+        min-height: 44px;
+        cursor: pointer;
+      }
+
+      .view-btn.active {
+        background: #111827;
+        color: #fff;
+        border-color: #111827;
+      }
+
+      .view-btn:focus-visible {
+        outline: 3px solid #bfdbfe;
+        outline-offset: 2px;
+      }
+
+      .detail-badge {
+        background: #eef2ff;
+        color: #4338ca;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-weight: 700;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1.6fr 0.95fr;
+        gap: 20px;
+      }
+
+      .map-card, .panel-card {
+        background: rgba(255,255,255,0.92);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: 0 14px 40px rgba(15,23,42,0.08);
+      }
+
+      .map-card { padding: 16px; }
+      .panel-card { padding: 16px; }
+
+      .map-card h2, .panel-card h3 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+      }
+
+      .floor-plan {
+        position: relative;
+        min-height: 660px;
+        border-radius: 22px;
+        background:
+          linear-gradient(90deg, rgba(255,255,255,0.8), rgba(255,255,255,0.5)),
+          radial-gradient(circle at top left, #dbeafe, transparent 30%),
+          linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        border: 1px solid #dbe2ea;
+        overflow: hidden;
+        padding: 24px;
+      }
+
+      .wall {
+        position: absolute;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+      }
+
+      .wall.top { top: 0; left: 0; width: 100%; height: 80px; }
+      .wall.left { top: 80px; left: 0; width: 90px; height: calc(100% - 80px); }
+      .wall.right { top: 80px; right: 0; width: 120px; height: calc(100% - 80px); }
+      .wall.bottom { bottom: 0; left: 0; width: 100%; height: 70px; }
+
+      .bar {
+        position: absolute;
+        top: 115px;
+        left: 110px;
+        width: 220px;
+        height: 110px;
+        border: 2px solid #c7d2fe;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #fff7ed, #e0f2fe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #475569;
+      }
+
+      .kitchen {
+        position: absolute;
+        top: 100px;
+        right: 150px;
+        width: 160px;
+        height: 90px;
+        border-radius: 18px;
+        background: #fef3c7;
+        border: 1px dashed #f59e0b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #92400e;
+      }
+
+      .host {
+        position: absolute;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 44px;
+        border-radius: 999px;
+        background: #ffffff;
+        border: 2px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #334155;
+        cursor: pointer;
+      }
+
+      .table {
+        position: absolute;
+        border-radius: 18px;
+        padding: 10px;
+        min-width: 92px;
+        min-height: 92px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        color: white;
+        font-weight: 700;
+        border: 3px solid rgba(255,255,255,0.7);
+        box-shadow: 0 12px 24px rgba(15,23,42,0.12);
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        z-index: 3;
+        font-size: 0.95rem;
+        text-align: center;
+      }
+
+      .table:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(15,23,42,0.16); }
+      .table:active { transform: scale(0.98); }
+      .table.active { outline: 4px solid #0f172a; outline-offset: 3px; }
+      .table:focus-visible { outline: 4px solid #f8fafc; outline-offset: 3px; }
+
+      .table-label { font-size: 0.9rem; }
+      .table-meta { font-size: 0.72rem; opacity: 0.92; }
+
+      .table.empty { background: linear-gradient(145deg, var(--green), #34d399); }
+      .table.seated { background: linear-gradient(145deg, var(--amber), #fbbf24); color: #111827; }
+      .table.ordering { background: linear-gradient(145deg, var(--red), #fb7185); }
+      .table.preparing { background: linear-gradient(145deg, var(--indigo), #818cf8); }
+      .table.ready { background: linear-gradient(145deg, var(--purple), #c084fc); }
+      .table.paid { background: linear-gradient(145deg, var(--gray), #94a3b8); }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        font-size: 0.9rem;
+      }
+
+      .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .alert-panel {
+        margin-bottom: 16px;
+        background: linear-gradient(135deg, #fff7ed, #fef3c7);
+        border: 1px solid #fbbf24;
+        border-radius: 18px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+      }
+
+      .alert-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 800;
+      }
+
+      .alert-meta {
+        font-size: 0.92rem;
+        color: #92400e;
+      }
+
+      .assign-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        min-height: 48px;
+        min-width: 48px;
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(15,23,42,0.12); }
+      .btn:active { transform: scale(0.97); }
+
+      .btn-primary { background: #111827; color: #fff; }
+      .btn-secondary { background: #fff; border: 1px solid #cbd5e1; color: #111827; }
+      .btn-ghost { background: #eef2ff; color: #4338ca; }
+
+      .detail-card {
+        display: grid;
+        gap: 12px;
+      }
+
+      .view-pane {
+        display: none;
+      }
+
+      .view-pane.active {
+        display: block;
+      }
+
+      .queue-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .queue-item {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+        background: #fff;
+      }
+
+      .queue-item strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .queue-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+
+      .detail-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #f8fafc;
+        border: 1px solid var(--line);
+      }
+
+      .detail-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .detail-block {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px;
+      }
+
+      .detail-block h4 { margin: 0 0 8px; font-size: 0.95rem; }
+      .detail-block p { margin: 4px 0; color: #4b5563; }
+
+      .order-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .order-list li {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px dashed #e5e7eb;
+        padding-bottom: 6px;
+      }
+
+      .action-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 6px;
+      }
+
+      .feedback {
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #ecfeff;
+        color: #0f766e;
+        border: 1px solid #a7f3d0;
+        font-size: 0.93rem;
+      }
+
+      @media (max-width: 1100px) {
+        .layout { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <section class="hero">
+        <div>
+          <h1>Cashier Floor Map</h1>
+          <p>Realtime table flow with alert triage and action-ready details.</p>
+        </div>
+        <div class="view-switcher" role="tablist" aria-label="Cashier views">
+          <button class="view-btn active" data-view="floor" type="button">Floor view</button>
+          <button class="view-btn" data-view="alert" type="button">Alert queue</button>
+          <button class="view-btn" data-view="order" type="button">Order panel</button>
+          <button class="view-btn" data-view="host" type="button">Host stand</button>
+        </div>
+      </section>
+
+      <div class="layout">
+        <section class="map-card">
+          <h2>Restaurant floor map</h2>
+          <div class="floor-plan" id="floorPlan">
+            <div class="wall top"></div>
+            <div class="wall left"></div>
+            <div class="wall right"></div>
+            <div class="wall bottom"></div>
+            <button class="host" data-view="host" type="button">Host stand</button>
+            <div class="bar">Bar</div>
+            <div class="kitchen">Kitchen</div>
+
+            <button class="table empty" data-id="1" style="top: 140px; left: 40px;" data-name="Table 1" data-customer="Walk-in" data-order="None" data-payment="Open" data-status="Empty"><span class="table-label">T1</span><span class="table-meta">Empty</span></button>
+            <button class="table seated active" data-id="2" style="top: 140px; left: 180px;" data-name="Table 2" data-customer="Mina & Sam" data-order="2 mains / 2 drinks" data-payment="Pending" data-status="Seated"><span class="table-label">T2</span><span class="table-meta">Seated</span></button>
+            <button class="table ordering" data-id="3" style="top: 140px; left: 320px;" data-name="Table 3" data-customer="Noah" data-order="1 appetizer" data-payment="Open" data-status="Ordering"><span class="table-label">T3</span><span class="table-meta">Ordering</span></button>
+            <button class="table preparing" data-id="4" style="top: 240px; left: 40px;" data-name="Table 4" data-customer="Priya" data-order="Pasta / salad" data-payment="In kitchen" data-status="Preparing"><span class="table-label">T4</span><span class="table-meta">Preparing</span></button>
+            <button class="table ready" data-id="5" style="top: 245px; left: 190px;" data-name="Table 5" data-customer="Rina" data-order="Burger / fries" data-payment="Ready" data-status="Ready"><span class="table-label">T5</span><span class="table-meta">Ready</span></button>
+            <button class="table paid" data-id="6" style="top: 250px; left: 340px;" data-name="Table 6" data-customer="Liam" data-order="Paid" data-payment="Settled" data-status="Paid"><span class="table-label">T6</span><span class="table-meta">Paid</span></button>
+            <button class="table empty" data-id="7" style="top: 350px; left: 35px;" data-name="Table 7" data-customer="Open" data-order="None" data-payment="Open" data-status="Empty"><span class="table-label">T7</span><span class="table-meta">Empty</span></button>
+            <button class="table seated" data-id="8" style="top: 350px; left: 180px;" data-name="Table 8" data-customer="Kara" data-order="3 tapas" data-payment="Pending" data-status="Seated"><span class="table-label">T8</span><span class="table-meta">Seated</span></button>
+            <button class="table ordering" data-id="9" style="top: 350px; left: 330px;" data-name="Table 9" data-customer="Julian" data-order="2 drinks" data-payment="Open" data-status="Ordering"><span class="table-label">T9</span><span class="table-meta">Ordering</span></button>
+            <button class="table preparing" data-id="10" style="top: 450px; left: 40px;" data-name="Table 10" data-customer="Maya" data-order="Sushi / tea" data-payment="In kitchen" data-status="Preparing"><span class="table-label">T10</span><span class="table-meta">Preparing</span></button>
+            <button class="table ready" data-id="11" style="top: 455px; left: 185px;" data-name="Table 11" data-customer="Chris" data-order="Steak / side" data-payment="Ready" data-status="Ready"><span class="table-label">T11</span><span class="table-meta">Ready</span></button>
+            <button class="table paid" data-id="12" style="top: 455px; left: 340px;" data-name="Table 12" data-customer="Sage" data-order="Paid" data-payment="Settled" data-status="Paid"><span class="table-label">T12</span><span class="table-meta">Paid</span></button>
+            <button class="table empty" data-id="13" style="top: 140px; right: 110px;" data-name="Table 13" data-customer="Open" data-order="None" data-payment="Open" data-status="Empty"><span class="table-label">T13</span><span class="table-meta">Empty</span></button>
+            <button class="table seated" data-id="14" style="top: 250px; right: 110px;" data-name="Table 14" data-customer="Aiden" data-order="4 meals" data-payment="Pending" data-status="Seated"><span class="table-label">T14</span><span class="table-meta">Seated</span></button>
+            <button class="table ordering" data-id="15" style="top: 355px; right: 110px;" data-name="Table 15" data-customer="Elle" data-order="1 entree" data-payment="Open" data-status="Ordering"><span class="table-label">T15</span><span class="table-meta">Ordering</span></button>
+            <button class="table preparing" data-id="16" style="top: 460px; right: 110px;" data-name="Table 16" data-customer="Omar" data-order="Salmon / rice" data-payment="In kitchen" data-status="Preparing"><span class="table-label">T16</span><span class="table-meta">Preparing</span></button>
+            <button class="table ready" data-id="17" style="top: 230px; right: 20px;" data-name="Table 17" data-customer="Faye" data-order="Poke bowl" data-payment="Ready" data-status="Ready"><span class="table-label">T17</span><span class="table-meta">Ready</span></button>
+            <button class="table paid" data-id="18" style="top: 345px; right: 20px;" data-name="Table 18" data-customer="Nico" data-order="Paid" data-payment="Settled" data-status="Paid"><span class="table-label">T18</span><span class="table-meta">Paid</span></button>
+            <button class="table empty" data-id="19" style="top: 580px; left: 40px;" data-name="Table 19" data-customer="Open" data-order="None" data-payment="Open" data-status="Empty"><span class="table-label">T19</span><span class="table-meta">Empty</span></button>
+            <button class="table seated" data-id="20" style="top: 580px; left: 200px;" data-name="Table 20" data-customer="Jon & Bea" data-order="5 desserts" data-payment="Pending" data-status="Seated"><span class="table-label">T20</span><span class="table-meta">Seated</span></button>
+          </div>
+
+          <div class="legend">
+            <div class="legend-item"><span class="swatch" style="background: var(--green);"></span>Empty</div>
+            <div class="legend-item"><span class="swatch" style="background: var(--amber);"></span>Seated</div>
+            <div class="legend-item"><span class="swatch" style="background: var(--red);"></span>Ordering</div>
+            <div class="legend-item"><span class="swatch" style="background: var(--indigo);"></span>Preparing</div>
+            <div class="legend-item"><span class="swatch" style="background: var(--purple);"></span>Ready</div>
+            <div class="legend-item"><span class="swatch" style="background: var(--gray);"></span>Paid</div>
+          </div>
+        </section>
+
+        <aside class="panel-card">
+          <div class="view-pane active" data-view-pane="floor">
+            <div class="alert-panel">
+              <div class="alert-title">
+                <span>New customer alert</span>
+                <span>2 min ago</span>
+              </div>
+              <div class="alert-meta">Party of 4 at the front door. Assign a table quickly.</div>
+              <div class="assign-row">
+                <button class="btn btn-primary" data-assign="2">Assign T2</button>
+                <button class="btn btn-secondary" data-assign="8">Assign T8</button>
+                <button class="btn btn-ghost" data-assign="19">Assign T19</button>
+              </div>
+            </div>
+
+            <div class="detail-card">
+              <div class="detail-top">
+                <div>
+                  <strong id="detailName">Table 2</strong>
+                  <div style="color:#64748b; font-size:0.92rem;">Selected status: <span id="detailStatus">Seated</span></div>
+                </div>
+                <span class="detail-badge" id="detailBadge">Seated</span>
+              </div>
+
+              <div class="detail-grid">
+                <div class="detail-block">
+                  <h4>Customer info</h4>
+                  <p><strong>Guest:</strong> <span id="detailCustomer">Mina & Sam</span></p>
+                  <p><strong>Party size:</strong> 2</p>
+                  <p><strong>Notes:</strong> Window seat preferred</p>
+                </div>
+
+                <div id="feedback" class="feedback" role="status">Tap a table or use the alert buttons to update the panel.</div>
+
+                <div class="detail-block">
+                  <h4>Current order</h4>
+                  <ul class="order-list">
+                    <li><span>Chicken Caesar</span><span>$18</span></li>
+                    <li><span>Rosemary steak</span><span>$24</span></li>
+                    <li><span>Sparkling water</span><span>$4</span></li>
+                  </ul>
+                  <p id="detailOrder">2 mains / 2 drinks</p>
+                </div>
+
+                <div class="detail-block">
+                  <h4>Payment status</h4>
+                  <p><span class="status-dot" style="background: #f59e0b;"></span><span id="detailPayment">Pending</span></p>
+                  <p>Tip %: 18</p>
+                </div>
+
+                <div class="action-row">
+                  <button class="btn btn-primary" onclick="handleFloorAction(event, 'send-check')">Send check</button>
+                  <button class="btn btn-secondary" onclick="handleFloorAction(event, 'reassign')">Reassign</button>
+                  <button class="btn btn-ghost" onclick="handleFloorAction(event, 'mark-ready')">Mark ready</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="view-pane" data-view-pane="alert">
+            <div class="queue-list">
+              <div class="queue-item">
+                <strong>New party at the front door</strong>
+                <div>Party of 4 • waiting 2 min</div>
+                <div class="queue-actions">
+                  <button class="btn btn-primary" data-assign="2" onclick="handleAssign(event, '2')">Assign T2</button>
+                  <button class="btn btn-secondary" data-assign="8" onclick="handleAssign(event, '8')">Assign T8</button>
+                </div>
+              </div>
+              <div class="queue-item">
+                <strong>Table 19 is ready for reset</strong>
+                <div>Clear and seat next party</div>
+                <div class="queue-actions">
+                  <button class="btn btn-ghost" data-assign="19" onclick="handleAssign(event, '19')">Open T19</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="view-pane" data-view-pane="order">
+            <div class="queue-list">
+              <div class="queue-item">
+                <strong>Table 3 • Ordering</strong>
+                <div>1 appetizer • 2 drinks • 1 pending item</div>
+                <div class="queue-actions">
+                  <button class="btn btn-primary" onclick="handleOrderButton(event, '3', 'confirm-order')">Confirm order</button>
+                  <button class="btn btn-secondary" onclick="handleOrderButton(event, '3', 'adjust-order')">Adjust</button>
+                </div>
+              </div>
+              <div class="queue-item">
+                <strong>Table 10 • Preparing</strong>
+                <div>Sushi • tea • kitchen in progress</div>
+                <div class="queue-actions">
+                  <button class="btn btn-ghost" onclick="handleOrderButton(event, '10', 'mark-ready')">Mark ready</button>
+                </div>
+              </div>
+              <div class="queue-item">
+                <strong>Table 5 • Ready</strong>
+                <div>Burger • fries • pickup now</div>
+                <div class="queue-actions">
+                  <button class="btn btn-primary" onclick="handleOrderButton(event, '5', 'call-guest')">Call guest</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="view-pane" data-view-pane="host">
+            <div class="queue-list">
+              <div class="queue-item">
+                <strong>Waiting party A</strong>
+                <div>5 guests • 8 min wait</div>
+                <div class="queue-actions">
+                  <button class="btn btn-primary" data-assign="19" onclick="handleAssign(event, '19')">Seat at T19</button>
+                  <button class="btn btn-secondary" data-assign="8" onclick="handleAssign(event, '8')">Seat at T8</button>
+                </div>
+              </div>
+              <div class="queue-item">
+                <strong>Waiting party B</strong>
+                <div>2 guests • 3 min wait</div>
+                <div class="queue-actions">
+                  <button class="btn btn-ghost" data-assign="2" onclick="handleAssign(event, '2')">Seat at T2</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      const tables = Array.from(document.querySelectorAll('.table'));
+      const viewButtons = Array.from(document.querySelectorAll('.view-btn'));
+      const viewPanes = Array.from(document.querySelectorAll('.view-pane'));
+      const hostButtons = Array.from(document.querySelectorAll('.host, .view-btn[data-view="host"]'));
+      const detailName = document.getElementById('detailName');
+      const detailStatus = document.getElementById('detailStatus');
+      const detailBadge = document.getElementById('detailBadge');
+      const detailCustomer = document.getElementById('detailCustomer');
+      const detailOrder = document.getElementById('detailOrder');
+      const detailPayment = document.getElementById('detailPayment');
+      const feedback = document.getElementById('feedback');
+      const assignButtons = Array.from(document.querySelectorAll('[data-assign]'));
+      const actionButtons = Array.from(document.querySelectorAll('.action-row .btn'));
+
+      function updateDetail(table) {
+        tables.forEach((item) => item.classList.remove('active'));
+        table.classList.add('active');
+        detailName.textContent = table.dataset.name;
+        detailStatus.textContent = table.dataset.status;
+        detailBadge.textContent = table.dataset.status;
+        detailCustomer.textContent = table.dataset.customer;
+        detailOrder.textContent = table.dataset.order;
+        detailPayment.textContent = table.dataset.payment;
+      }
+
+      function showView(viewName) {
+        viewButtons.forEach((button) => {
+          button.classList.toggle('active', button.dataset.view === viewName);
+        });
+        viewPanes.forEach((pane) => {
+          pane.classList.toggle('active', pane.dataset.viewPane === viewName);
+        });
+      }
+
+      function handleOrderButton(event, tableId, action) {
+        event.preventDefault();
+        const target = tables.find((table) => table.dataset.id === tableId);
+        if (target) {
+          if (action === 'confirm-order') {
+            updateDetail(target);
+            showView('floor');
+            feedback.textContent = `✓ ${target.dataset.name} order confirmed and sent to kitchen.`;
+          } else if (action === 'adjust-order') {
+            feedback.textContent = `✎ ${target.dataset.name} order adjustment panel opened.`;
+          } else if (action === 'mark-ready') {
+            target.dataset.status = 'Ready';
+            target.className = 'table ready';
+            updateDetail(target);
+            showView('floor');
+            feedback.textContent = `✓ ${target.dataset.name} marked ready for pickup.`;
+          } else if (action === 'call-guest') {
+            feedback.textContent = `☎ ${target.dataset.name} guest called for pickup.`;
+          }
+        }
+      }
+
+      function handleAssign(event, tableId) {
+        event.preventDefault();
+        const target = tables.find((table) => table.dataset.id === tableId);
+        if (target) {
+          updateDetail(target);
+          showView('floor');
+          feedback.textContent = `✓ ${target.dataset.name} assigned for the new party.`;
+        }
+      }
+
+      function handleFloorAction(event, action) {
+        event.preventDefault();
+        const activeTable = document.querySelector('.table.active');
+        if (!activeTable) {
+          feedback.textContent = '⚠ Please select a table first.';
+          return;
+        }
+        if (action === 'send-check') {
+          activeTable.dataset.payment = 'Check sent';
+          detailPayment.textContent = 'Check sent';
+          feedback.textContent = `✓ ${activeTable.dataset.name} check sent to table.`;
+        } else if (action === 'reassign') {
+          feedback.textContent = `↻ ${activeTable.dataset.name} moved to host stand queue.`;
+          showView('host');
+        } else if (action === 'mark-ready') {
+          activeTable.dataset.status = 'Ready';
+          activeTable.dataset.payment = 'Ready';
+          activeTable.className = 'table ready active';
+          detailStatus.textContent = 'Ready';
+          detailBadge.textContent = 'Ready';
+          detailPayment.textContent = 'Ready';
+          feedback.textContent = `✓ ${activeTable.dataset.name} marked ready for pickup.`;
+        }
+      }
+
+      tables.forEach((table) => {
+        table.addEventListener('click', () => {
+          updateDetail(table);
+          showView('floor');
+          feedback.textContent = `${table.dataset.name} selected. You can now assign or act on this table.`;
+        });
+      });
+
+      viewButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          showView(button.dataset.view);
+        });
+      });
+
+      hostButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          showView('host');
+          feedback.textContent = 'Host stand view opened. Waiting parties are ready to be assigned.';
+        });
+      });
+
+      // Onclick handlers are now used for dynamic buttons
+    </script>
+  </body>
+</html>
