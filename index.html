@@ -41,6 +41,7 @@
         border: 1px solid var(--line);
         border-radius: 18px;
         box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+        gap: 16px;
       }
 
       .hero h1 {
@@ -79,6 +80,11 @@
       .view-btn:focus-visible {
         outline: 3px solid #bfdbfe;
         outline-offset: 2px;
+      }
+
+      button:focus-visible {
+        outline: 3px solid #60a5fa;
+        outline-offset: 3px;
       }
 
       .detail-badge {
@@ -137,10 +143,10 @@
 
       .bar {
         position: absolute;
-        top: 115px;
+        top: 78px;
         left: 110px;
-        width: 220px;
-        height: 110px;
+        width: 310px;
+        height: 46px;
         border: 2px solid #c7d2fe;
         border-radius: 18px;
         background: linear-gradient(135deg, #fff7ed, #e0f2fe);
@@ -153,10 +159,10 @@
 
       .kitchen {
         position: absolute;
-        top: 100px;
+        top: 78px;
         right: 150px;
         width: 160px;
-        height: 90px;
+        height: 46px;
         border-radius: 18px;
         background: #fef3c7;
         border: 1px dashed #f59e0b;
@@ -222,6 +228,32 @@
       .table.preparing { background: linear-gradient(145deg, var(--indigo), #818cf8); }
       .table.ready { background: linear-gradient(145deg, var(--purple), #c084fc); }
       .table.paid { background: linear-gradient(145deg, var(--gray), #94a3b8); }
+
+      .table.check-sent {
+        box-shadow: 0 0 0 4px #fef3c7, 0 0 0 7px #f59e0b, 0 14px 30px rgba(245,158,11,0.32);
+        animation: check-pulse 1.5s ease-in-out infinite;
+      }
+
+      .table.check-sent::after {
+        content: "✓ CHECK";
+        position: absolute;
+        top: -14px;
+        right: -20px;
+        z-index: 5;
+        padding: 4px 7px;
+        border-radius: 999px;
+        background: #111827;
+        color: #fff;
+        font-size: 0.62rem;
+        line-height: 1;
+        letter-spacing: 0.03em;
+        box-shadow: 0 4px 10px rgba(15,23,42,0.2);
+      }
+
+      @keyframes check-pulse {
+        0%, 100% { box-shadow: 0 0 0 4px #fef3c7, 0 0 0 7px #f59e0b, 0 14px 30px rgba(245,158,11,0.32); }
+        50% { box-shadow: 0 0 0 5px #fff7ed, 0 0 0 10px rgba(245,158,11,0.45), 0 18px 34px rgba(245,158,11,0.4); }
+      }
 
       .legend {
         display: flex;
@@ -399,6 +431,17 @@
       @media (max-width: 1100px) {
         .layout { grid-template-columns: 1fr; }
       }
+
+      @media (max-width: 720px) {
+        .app-shell { padding: 12px; }
+        .hero { align-items: flex-start; flex-direction: column; padding: 16px; }
+        .view-switcher { width: 100%; }
+        .view-btn { flex: 1 1 140px; }
+        .map-card, .panel-card { border-radius: 18px; padding: 12px; }
+        .floor-plan { min-width: 660px; }
+        .map-card { overflow-x: auto; }
+        .detail-top { align-items: flex-start; gap: 10px; }
+      }
     </style>
   </head>
   <body>
@@ -469,8 +512,8 @@
               </div>
               <div class="alert-meta">Party of 4 at the front door. Assign a table quickly.</div>
               <div class="assign-row">
-                <button class="btn btn-primary" data-assign="2">Assign T2</button>
-                <button class="btn btn-secondary" data-assign="8">Assign T8</button>
+                <button class="btn btn-primary" data-assign="1">Assign T1</button>
+                <button class="btn btn-secondary" data-assign="7">Assign T7</button>
                 <button class="btn btn-ghost" data-assign="19">Assign T19</button>
               </div>
             </div>
@@ -511,9 +554,9 @@
                 </div>
 
                 <div class="action-row">
-                  <button class="btn btn-primary" onclick="handleFloorAction(event, 'send-check')">Send check</button>
-                  <button class="btn btn-secondary" onclick="handleFloorAction(event, 'reassign')">Reassign</button>
-                  <button class="btn btn-ghost" onclick="handleFloorAction(event, 'mark-ready')">Mark ready</button>
+                  <button class="btn btn-primary" data-floor-action="send-check" type="button">Send check</button>
+                  <button class="btn btn-secondary" data-floor-action="reassign" type="button">Reassign</button>
+                  <button class="btn btn-ghost" data-floor-action="mark-ready" type="button">Mark ready</button>
                 </div>
               </div>
             </div>
@@ -525,15 +568,15 @@
                 <strong>New party at the front door</strong>
                 <div>Party of 4 • waiting 2 min</div>
                 <div class="queue-actions">
-                  <button class="btn btn-primary" data-assign="2" onclick="handleAssign(event, '2')">Assign T2</button>
-                  <button class="btn btn-secondary" data-assign="8" onclick="handleAssign(event, '8')">Assign T8</button>
+                  <button class="btn btn-primary" data-assign="1">Assign T1</button>
+                  <button class="btn btn-secondary" data-assign="7">Assign T7</button>
                 </div>
               </div>
               <div class="queue-item">
                 <strong>Table 19 is ready for reset</strong>
                 <div>Clear and seat next party</div>
                 <div class="queue-actions">
-                  <button class="btn btn-ghost" data-assign="19" onclick="handleAssign(event, '19')">Open T19</button>
+                  <button class="btn btn-ghost" data-assign="19">Assign T19</button>
                 </div>
               </div>
             </div>
@@ -545,22 +588,22 @@
                 <strong>Table 3 • Ordering</strong>
                 <div>1 appetizer • 2 drinks • 1 pending item</div>
                 <div class="queue-actions">
-                  <button class="btn btn-primary" onclick="handleOrderButton(event, '3', 'confirm-order')">Confirm order</button>
-                  <button class="btn btn-secondary" onclick="handleOrderButton(event, '3', 'adjust-order')">Adjust</button>
+                  <button class="btn btn-primary" data-order-action="confirm-order" data-table-id="3" type="button">Confirm order</button>
+                  <button class="btn btn-secondary" data-order-action="adjust-order" data-table-id="3" type="button">Adjust</button>
                 </div>
               </div>
               <div class="queue-item">
                 <strong>Table 10 • Preparing</strong>
                 <div>Sushi • tea • kitchen in progress</div>
                 <div class="queue-actions">
-                  <button class="btn btn-ghost" onclick="handleOrderButton(event, '10', 'mark-ready')">Mark ready</button>
+                  <button class="btn btn-ghost" data-order-action="mark-ready" data-table-id="10" type="button">Mark ready</button>
                 </div>
               </div>
               <div class="queue-item">
                 <strong>Table 5 • Ready</strong>
                 <div>Burger • fries • pickup now</div>
                 <div class="queue-actions">
-                  <button class="btn btn-primary" onclick="handleOrderButton(event, '5', 'call-guest')">Call guest</button>
+                  <button class="btn btn-primary" data-order-action="call-guest" data-table-id="5" type="button">Call guest</button>
                 </div>
               </div>
             </div>
@@ -572,15 +615,15 @@
                 <strong>Waiting party A</strong>
                 <div>5 guests • 8 min wait</div>
                 <div class="queue-actions">
-                  <button class="btn btn-primary" data-assign="19" onclick="handleAssign(event, '19')">Seat at T19</button>
-                  <button class="btn btn-secondary" data-assign="8" onclick="handleAssign(event, '8')">Seat at T8</button>
+                  <button class="btn btn-primary" data-assign="19">Seat at T19</button>
+                  <button class="btn btn-secondary" data-assign="7">Seat at T7</button>
                 </div>
               </div>
               <div class="queue-item">
                 <strong>Waiting party B</strong>
                 <div>2 guests • 3 min wait</div>
                 <div class="queue-actions">
-                  <button class="btn btn-ghost" data-assign="2" onclick="handleAssign(event, '2')">Seat at T2</button>
+                  <button class="btn btn-ghost" data-assign="1">Seat at T1</button>
                 </div>
               </div>
             </div>
@@ -601,8 +644,7 @@
       const detailOrder = document.getElementById('detailOrder');
       const detailPayment = document.getElementById('detailPayment');
       const feedback = document.getElementById('feedback');
-      const assignButtons = Array.from(document.querySelectorAll('[data-assign]'));
-      const actionButtons = Array.from(document.querySelectorAll('.action-row .btn'));
+      const statusClassNames = ['empty', 'seated', 'ordering', 'preparing', 'ready', 'paid'];
 
       function updateDetail(table) {
         tables.forEach((item) => item.classList.remove('active'));
@@ -615,6 +657,15 @@
         detailPayment.textContent = table.dataset.payment;
       }
 
+      function setTableStatus(table, status, payment = table.dataset.payment) {
+        table.dataset.status = status;
+        table.dataset.payment = payment;
+        table.classList.remove('check-sent');
+        table.classList.remove(...statusClassNames);
+        table.classList.add(status.toLowerCase());
+        table.querySelector('.table-meta').textContent = status;
+      }
+
       function showView(viewName) {
         viewButtons.forEach((button) => {
           button.classList.toggle('active', button.dataset.view === viewName);
@@ -624,8 +675,7 @@
         });
       }
 
-      function handleOrderButton(event, tableId, action) {
-        event.preventDefault();
+      function handleOrderButton(tableId, action) {
         const target = tables.find((table) => table.dataset.id === tableId);
         if (target) {
           if (action === 'confirm-order') {
@@ -635,8 +685,7 @@
           } else if (action === 'adjust-order') {
             feedback.textContent = `✎ ${target.dataset.name} order adjustment panel opened.`;
           } else if (action === 'mark-ready') {
-            target.dataset.status = 'Ready';
-            target.className = 'table ready';
+            setTableStatus(target, 'Ready', 'Ready');
             updateDetail(target);
             showView('floor');
             feedback.textContent = `✓ ${target.dataset.name} marked ready for pickup.`;
@@ -646,18 +695,25 @@
         }
       }
 
-      function handleAssign(event, tableId) {
-        event.preventDefault();
+      function handleAssign(tableId) {
         const target = tables.find((table) => table.dataset.id === tableId);
         if (target) {
+          if (target.dataset.status !== 'Empty') {
+            updateDetail(target);
+            showView('floor');
+            feedback.textContent = `${target.dataset.name} is already occupied. Choose an empty table.`;
+            return;
+          }
+          target.dataset.customer = 'New party';
+          target.dataset.order = 'Order pending';
+          setTableStatus(target, 'Seated', 'Pending');
           updateDetail(target);
           showView('floor');
-          feedback.textContent = `✓ ${target.dataset.name} assigned for the new party.`;
+          feedback.textContent = `${target.dataset.name} assigned to the new party.`;
         }
       }
 
-      function handleFloorAction(event, action) {
-        event.preventDefault();
+      function handleFloorAction(action) {
         const activeTable = document.querySelector('.table.active');
         if (!activeTable) {
           feedback.textContent = '⚠ Please select a table first.';
@@ -665,18 +721,16 @@
         }
         if (action === 'send-check') {
           activeTable.dataset.payment = 'Check sent';
+          activeTable.classList.add('check-sent');
+          activeTable.querySelector('.table-meta').textContent = 'Check sent';
           detailPayment.textContent = 'Check sent';
           feedback.textContent = `✓ ${activeTable.dataset.name} check sent to table.`;
         } else if (action === 'reassign') {
           feedback.textContent = `↻ ${activeTable.dataset.name} moved to host stand queue.`;
           showView('host');
         } else if (action === 'mark-ready') {
-          activeTable.dataset.status = 'Ready';
-          activeTable.dataset.payment = 'Ready';
-          activeTable.className = 'table ready active';
-          detailStatus.textContent = 'Ready';
-          detailBadge.textContent = 'Ready';
-          detailPayment.textContent = 'Ready';
+          setTableStatus(activeTable, 'Ready', 'Ready');
+          updateDetail(activeTable);
           feedback.textContent = `✓ ${activeTable.dataset.name} marked ready for pickup.`;
         }
       }
@@ -702,7 +756,15 @@
         });
       });
 
-      // Onclick handlers are now used for dynamic buttons
+      document.addEventListener('click', (event) => {
+        const assignButton = event.target.closest('[data-assign]');
+        const orderButton = event.target.closest('[data-order-action]');
+        const floorActionButton = event.target.closest('[data-floor-action]');
+
+        if (assignButton) handleAssign(assignButton.dataset.assign);
+        if (orderButton) handleOrderButton(orderButton.dataset.tableId, orderButton.dataset.orderAction);
+        if (floorActionButton) handleFloorAction(floorActionButton.dataset.floorAction);
+      });
     </script>
   </body>
 </html>
